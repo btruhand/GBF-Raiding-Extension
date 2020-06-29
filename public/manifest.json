@@ -1,25 +1,23 @@
 {
-  "short_name": "React App",
-  "name": "Create React App Sample",
-  "icons": [
-    {
-      "src": "favicon.ico",
-      "sizes": "64x64 32x32 24x24 16x16",
-      "type": "image/x-icon"
-    },
-    {
-      "src": "logo192.png",
-      "type": "image/png",
-      "sizes": "192x192"
-    },
-    {
-      "src": "logo512.png",
-      "type": "image/png",
-      "sizes": "512x512"
-    }
+  "name": "GBF Raiding Extension",
+  "version": "1.0",
+  "description": "Extension for raiding",
+  "manifest_version": 2,
+  "icons": {
+    "16": "favicon.ico",
+    "48": "logo192.png",
+    "128": "logo512.png"
+  },
+  "permissions": [
+    "tabs"
   ],
-  "start_url": ".",
-  "display": "standalone",
-  "theme_color": "#000000",
-  "background_color": "#ffffff"
+  "browser_action": {
+    "default_title": "GBF Raiding"
+  },
+  "background": {
+    "scripts": [
+      "background.js"
+    ],
+    "persistent": false
+  }
 }
