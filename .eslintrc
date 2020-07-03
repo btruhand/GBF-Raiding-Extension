@@ -17,6 +17,7 @@
         }
     },
     "env": {
+        "node": true,
         "es6": true,
         "webextensions": true,
         "browser": true
