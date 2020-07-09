@@ -61,6 +61,8 @@ module.exports = function (webpackEnv) {
   const isEnvProductionProfile =
     isEnvProduction && process.argv.includes('--profile');
 
+  const isDisplayErrorDetails = process.argv.includes('--display-error-details')
+
   // We will provide `paths.publicUrlOrPath` to our app
   // as %PUBLIC_URL% in `index.html` and `process.env.PUBLIC_URL` in JavaScript.
   // Omit trailing slash as %PUBLIC_URL%/xyz looks better than %PUBLIC_URL%xyz.
@@ -107,7 +109,7 @@ module.exports = function (webpackEnv) {
           ],
           sourceMap: isEnvProduction && shouldUseSourceMap,
         },
-      },
+      }
     ].filter(Boolean);
     if (preProcessor) {
       loaders.push(
@@ -129,6 +131,11 @@ module.exports = function (webpackEnv) {
   };
 
   return {
+    stats: {
+      colors: true,
+      reasons: true,
+      errorDetails: isDisplayErrorDetails
+    },
     mode: isEnvProduction ? 'production' : isEnvDevelopment && 'development',
     // Stop compilation early in production
     bail: isEnvProduction,
@@ -303,6 +310,7 @@ module.exports = function (webpackEnv) {
           'scheduler/tracing': 'scheduler/tracing-profiling',
         }),
         ...(modules.webpackAliases || {}),
+        '@': paths.appSrc
       },
       plugins: [
         // Adds support for installing with Plug'n'Play, leading to faster installs and adding
@@ -341,7 +349,13 @@ module.exports = function (webpackEnv) {
                 formatter: require.resolve('react-dev-utils/eslintFormatter'),
                 eslintPath: require.resolve('eslint'),
                 resolvePluginsRelativeTo: __dirname,
-
+                ignore: isExtendingEslintConfig,
+                baseConfig: isExtendingEslintConfig
+                  ? undefined
+                  : {
+                    extends: [require.resolve('eslint-config-react-app')],
+                  },
+                useEslintrc: isExtendingEslintConfig,
               },
               loader: require.resolve('eslint-loader'),
             },
