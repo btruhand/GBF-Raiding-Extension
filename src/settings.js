@@ -1,6 +1,6 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
-import TwitterKeyStore from './components/twitter';
+import TwitterKeyStore from '@/components/twitter';
 
 ReactDOM.render(
   <React.StrictMode>
