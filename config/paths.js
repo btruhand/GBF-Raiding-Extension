@@ -58,6 +58,7 @@ module.exports = {
   appSettings: resolveApp('public/settings.html'),
   appIndexJs: resolveModule(resolveApp, 'src/index'),
   appSettingJs: resolveModule(resolveApp, 'src/settings'),
+  appBackgroundJs: resolveModule(resolveApp, 'src/background'),
   appPackageJson: resolveApp('package.json'),
   appSrc: resolveApp('src'),
   appTsConfig: resolveApp('tsconfig.json'),
@@ -68,7 +69,5 @@ module.exports = {
   appNodeModules: resolveApp('node_modules'),
   publicUrlOrPath,
 };
-
-
 
 module.exports.moduleFileExtensions = moduleFileExtensions;

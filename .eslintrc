@@ -1,5 +1,4 @@
 {
-    "parser": "@typescript-eslint/parser",
     "plugins": [
         "react",
         "@typescript-eslint"
@@ -26,9 +25,44 @@
         "browser": true
     },
     "rules": {
-        "no-console": "off",
-        "@typescript-eslint/no-var-requires": "off"
+        "no-console": "off"
     },
+    "overrides": [
+        {
+            "files": [
+                "**/*.ts",
+                "**/*.tsx"
+            ],
+            "extends": [
+                "eslint:recommended",
+                "plugin:react/recommended",
+                "plugin:@typescript-eslint/recommended"
+            ],
+            "parser": "@typescript-eslint/parser",
+            "plugins": [
+                "react",
+                "@typescript-eslint"
+            ],
+            "rules": {
+                "no-console": "off",
+                "@typescript-eslint/no-var-requires": "off",
+                "@typescript-eslint/member-delimiter-style": "none",
+                "linebreak-style": [
+                    "error",
+                    "unix"
+                ],
+                "quotes": [
+                    "error",
+                    "single"
+                ],
+                "comma-dangle": [
+                    "error",
+                    "always-multiline"
+                ],
+                "@typescript-eslint/no-explicit-any": 0
+            }
+        }
+    ],
     "settings": {
         "react": {
             "version": "detect"
