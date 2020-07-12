@@ -1,15 +1,23 @@
 import Twitter from 'twitter-lite'
 import { ExtensionEvent } from '@/lib/events'
 
-function twitterRequestHandling(credentials: [string, string]) {
+async function twitterRequestHandling(credentials: [string, string]) {
+  console.log(`Credentials ${credentials}`)
   const twitter = new Twitter({
     consumer_key: credentials[0],
     consumer_secret: credentials[1]
   })
+
+  const bearerToken = await twitter.getBearerToken()
+  const app = new Twitter({
+    consumer_key: credentials[0],
+    consumer_secret: credentials[1],
+    bearer_token: bearerToken.access_token
+  });
   const parameters = {
     track: "#trump",
   };
-  const stream = twitter.stream("statuses/filter", parameters)
+  const stream = app.stream("statuses/filter", parameters)
     .on("start", response => console.log("start", response))
     .on("data", tweet => console.log("data", tweet.text))
     .on("ping", () => console.log("ping"))

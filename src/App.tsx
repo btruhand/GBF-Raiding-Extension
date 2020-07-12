@@ -27,6 +27,7 @@ function App() {
   const startTwitter = async () => {
     if (portRef.current.port) {
       const credentials = await getCredentials()
+      console.log(`current credentials: ${credentials}`)
       if (!credentials[0] || !credentials[1]) {
         alert('no twitter credentials are stored yet, please go to settings page')
       } else {

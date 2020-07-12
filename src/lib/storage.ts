@@ -2,7 +2,7 @@ const CONSUMER_KEY_KEY = 'twitter-consumer-key'
 const CONSUMER_SECRET_KEY = 'twitter-secret-key'
 
 function storeAppCredentials(consumerKey: string, consumerSecret: string, cb: () => void): void {
-  chrome.storage.local.set({ CONSUMER_KEY_KEY: consumerKey, CONSUMER_SECRET_KEY: consumerSecret }, cb)
+  chrome.storage.local.set({ [CONSUMER_KEY_KEY]: consumerKey, [CONSUMER_SECRET_KEY]: consumerSecret }, cb)
 }
 
 function getKeys(keys: string[], cb: (items: { [key: string]: any }) => void) {
@@ -25,7 +25,8 @@ const promisifiedGet = (...keys: string[]) => new Promise((resolve: (items: { [k
  */
 const getCredentials = () => {
   return promisifiedGet(CONSUMER_KEY_KEY, CONSUMER_SECRET_KEY).then((items): [string, string] => {
-    return items[CONSUMER_KEY_KEY], items[CONSUMER_SECRET_KEY]
+    console.log(`getCredentials`, items)
+    return [items[CONSUMER_KEY_KEY], items[CONSUMER_SECRET_KEY]]
   })
 }
 
