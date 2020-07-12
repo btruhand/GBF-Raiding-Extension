@@ -1,3 +1,24 @@
+import Twitter from 'twitter-lite'
+import { ExtensionEvent } from '@/lib/events'
+
+function twitterRequestHandling(credentials: [string, string]) {
+  const twitter = new Twitter({
+    consumer_key: credentials[0],
+    consumer_secret: credentials[1]
+  })
+  const parameters = {
+    track: "#trump",
+  };
+  const stream = twitter.stream("statuses/filter", parameters)
+    .on("start", response => console.log("start", response))
+    .on("data", tweet => console.log("data", tweet.text))
+    .on("ping", () => console.log("ping"))
+    .on("error", error => console.log("error", error))
+    .on("end", response => console.log("end", response));
+
+  process.nextTick(() => stream.destroy());  // emits "end" and "error" events
+}
+
 chrome.runtime.onInstalled.addListener((details) => {
   console.log(`onInstalled ID: ${details.id} | prevVersion: ${details.previousVersion} | reason: ${details.reason} ....`);
 });
@@ -11,8 +32,15 @@ chrome.runtime.onConnect.addListener(port => {
     console.log(`port ${port.name} is disconnecting`)
   })
 
-  port.onMessage.addListener((message) => {
-    console.log(`background got message ${message}`)
+  port.onMessage.addListener((e: ExtensionEvent) => {
+    console.log(`background got event ${e}`)
+  })
+
+  port.onMessage.addListener((e: ExtensionEvent) => {
+    if (e.type === 'twitter') {
+      console.log('got twitter event')
+      twitterRequestHandling(e.payload)
+    }
   })
 })
 

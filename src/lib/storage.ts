@@ -18,7 +18,16 @@ const promisifiedStoreAppCredentials = (consumerKey: string, consumerSecret: str
 const promisifiedGet = (...keys: string[]) => new Promise((resolve: (items: { [key: string]: any }) => void, _) => {
   getKeys(keys, resolve)
 })
-const getCredentials = () => promisifiedGet(CONSUMER_KEY_KEY, CONSUMER_SECRET_KEY)
+/**
+ * Gets Twitter credentials 
+ * 
+ * @returns A 2 tuple of string, first element is consumer key, second is secret key
+ */
+const getCredentials = () => {
+  return promisifiedGet(CONSUMER_KEY_KEY, CONSUMER_SECRET_KEY).then((items): [string, string] => {
+    return items[CONSUMER_KEY_KEY], items[CONSUMER_SECRET_KEY]
+  })
+}
 
 export {
   promisifiedStore as store,

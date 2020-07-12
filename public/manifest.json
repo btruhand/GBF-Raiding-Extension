@@ -10,14 +10,15 @@
   },
   "permissions": [
     "tabs",
-    "storage"
+    "storage",
+    "https://*.twitter.com"
   ],
   "browser_action": {
     "default_title": "GBF Raiding"
   },
   "background": {
     "scripts": [
-      "background.js"
+      "static/js/background.js"
     ],
     "persistent": false
   },

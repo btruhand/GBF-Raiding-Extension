@@ -1,5 +1,7 @@
 import React, { useRef, MutableRefObject } from 'react';
 import { PortRef } from '@/types/custom'
+import { getCredentials } from './lib/storage';
+import { createEvent } from './lib/events';
 
 function App() {
   const portRef: MutableRefObject<PortRef> = useRef({ port: null })
@@ -22,11 +24,23 @@ function App() {
       portRef.current = { port: null }
     } else console.log("no port currently")
   }
+  const startTwitter = async () => {
+    if (portRef.current.port) {
+      const credentials = await getCredentials()
+      if (!credentials[0] || !credentials[1]) {
+        alert('no twitter credentials are stored yet, please go to settings page')
+      } else {
+        console.log('posting twitter request')
+        portRef.current.port.postMessage(createEvent('twitter', credentials))
+      }
+    } else console.log("no port currently")
+  }
 
   return (
     <div className="App">
       <button onClick={startBackground}>Start background</button>
       <button onClick={stopBackground}>Stop background</button>
+      <button onClick={startTwitter}>Start Twitter</button>
     </div>
   );
 }
