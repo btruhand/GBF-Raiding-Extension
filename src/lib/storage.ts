@@ -1,6 +1,3 @@
-import { promisify } from 'util'
-import { MissingCredentials } from './exceptions'
-
 const CONSUMER_KEY_KEY = 'twitter-consumer-key'
 const CONSUMER_SECRET_KEY = 'twitter-secret-key'
 

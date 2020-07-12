@@ -1,15 +1,15 @@
-import React, { Ref, MutableRefObject, RefObject } from 'react';
+import React, { Ref, useRef } from 'react';
 import PropTypes from 'prop-types';
 import { getCredentials, storeCredentials } from '@/lib/storage'
 // import { createClient } from '@/twitter-stream'
 
 type TwitterKeyStoreProps = {
-  label: string,
-  name: string,
-  placeholder: string
+  label?: string,
+  name?: string,
+  placeholder?: string
 }
 
-const KeyStoreInput = React.forwardRef((props: TwitterKeyStoreProps, ref: MutableRefObject<HTMLInputElement>) => {
+const KeyStoreInput = React.forwardRef((props: TwitterKeyStoreProps, ref?: Ref<HTMLInputElement>) => {
   return (
     <label>
       {props.label}
@@ -27,14 +27,16 @@ KeyStoreInput.propTypes = {
 }
 
 function TwitterKeyStore() {
-  const apiKey: MutableRefObject<HTMLInputElement> = React.useRef()
-  const secretKey: MutableRefObject<HTMLInputElement> = React.useRef()
-  const onSubmit = (e) => {
-    storeCredentials(apiKey.current.value, secretKey.current.value).then(async () => {
+  const apiKey = useRef<HTMLInputElement>(null)
+  const secretKey = useRef<HTMLInputElement>(null)
+  const onSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    const apiKeyValue = apiKey.current && apiKey.current.value
+    const secretKeyValue = secretKey.current && secretKey.current.value
+    storeCredentials(apiKeyValue as string, secretKeyValue as string).then(async () => {
       if (chrome.runtime.lastError) {
         console.error('an error happened when trying to set API keys: ' + chrome.runtime.lastError)
       } else {
-        console.log(`successfully stored api key ${apiKey.current.value} and secret key ${secretKey.current.value}`)
+        console.log(`successfully stored api key ${apiKeyValue} and secret key ${secretKeyValue}`)
       }
       const result = await getCredentials()
       if (chrome.runtime.lastError) {

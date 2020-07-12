@@ -1,21 +1,25 @@
-import { store, get } from '@/lib/storage'
-
 chrome.runtime.onInstalled.addListener((details) => {
-  store('appId', details.id).then(() => console.log(
-    `onInstalled ID: ${details.id} | prevVersion: ${details.previousVersion} | reason: ${details.reason} ....`));
+  console.log(`onInstalled ID: ${details.id} | prevVersion: ${details.previousVersion} | reason: ${details.reason} ....`);
 });
 
-chrome.runtime.onMessage.addListener(async (message, sender) => {
-  const result = await get('appId')
-  if (sender.id === result['appId']) {
-    console.log(`got message from extension ${message}`)
+chrome.runtime.onConnect.addListener(port => {
+  if (port.name === 'gbf_raiding_extension') {
+    console.log('extension connected successfully')
   }
+
+  port.onDisconnect.addListener(port => {
+    console.log(`port ${port.name} is disconnecting`)
+  })
+
+  port.onMessage.addListener((message) => {
+    console.log(`background got message ${message}`)
+  })
 })
 
 chrome.browserAction.onClicked.addListener(() => {
   console.log("statement from background");
-  chrome.tabs.create({ 'url': chrome.extension.getURL('index.html') }, function (tab) {
-    console.log("mananaged to open tab")
+  chrome.tabs.create({ 'url': chrome.extension.getURL('index.html') }, function (_) {
+    console.log("mananaged to open tab", _)
     // Tab opened.
   });
 })
