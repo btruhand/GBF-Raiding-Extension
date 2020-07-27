@@ -24,8 +24,8 @@
     ]
   },
   "dependencies": {
-    "twitter-lite": "^0.14.0",
-    "es6-promisify": "6.1.1"
+    "es6-promisify": "6.1.1",
+    "twitter-lite": "github:btruhand/twitter-lite#ac73928"
   },
   "devDependencies": {
     "@babel/core": "7.9.0",
