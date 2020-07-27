@@ -1,5 +1,32 @@
 import Twitter from 'twitter-lite'
-import { ExtensionEvent } from '@/lib/events'
+import { ExtensionEvent, createEvent } from '@/lib/events'
+import { NoResponse } from '@/lib/exceptions'
+
+let streamReader: ReadableStreamDefaultReader<Uint8Array> | null
+
+function twitterStreamHandler(response: Response) {
+  function readIndefinite() {
+    if (streamReader) {
+      streamReader.read().then(function handle({ done, value }): any {
+        if (done) {
+          console.log('stopping')
+          streamReader = null
+        } else {
+          console.log('value', new TextDecoder("utf-8").decode(value))
+          return readIndefinite()
+        }
+      }).catch(reason => {
+        console.error('error occured when streaming from Twitter', reason)
+      })
+    }
+  }
+  if (response.body) {
+    streamReader = response.body.getReader();
+    readIndefinite()
+  } else {
+    throw new NoResponse('no response from twitter stream API')
+  }
+}
 
 async function twitterRequestHandling(credentials: [string, string]) {
   console.log(`Credentials ${credentials}`)
@@ -14,17 +41,14 @@ async function twitterRequestHandling(credentials: [string, string]) {
     consumer_secret: credentials[1],
     bearer_token: bearerToken.access_token
   });
-  const parameters = {
-    track: "#trump",
-  };
-  const stream = app.stream("statuses/filter", parameters)
-    .on("start", response => console.log("start", response))
-    .on("data", tweet => console.log("data", tweet.text))
-    .on("ping", () => console.log("ping"))
-    .on("error", error => console.log("error", error))
-    .on("end", response => console.log("end", response));
+  const appWithLabs = app.withLabs();
+  appWithLabs.addRules([{ value: '#TrumpIsACompleteFailure' }]);
 
-  process.nextTick(() => stream.destroy());  // emits "end" and "error" events
+  // see: https://developer.mozilla.org/en-US/docs/Web/API/Streams_API/Using_readable_streams#Consuming_a_fetch_as_a_stream
+  const headers = new Headers();
+  headers.append('Authorization', 'Bearer ' + bearerToken.access_token);
+  const response = fetch('https://api.twitter.com/labs/1/tweets/stream/filter', { method: 'GET', headers: headers })
+  return response.then(twitterStreamHandler)
 }
 
 chrome.runtime.onInstalled.addListener((details) => {
@@ -44,10 +68,23 @@ chrome.runtime.onConnect.addListener(port => {
     console.log(`background got event ${e}`)
   })
 
-  port.onMessage.addListener((e: ExtensionEvent) => {
+  port.onMessage.addListener(async (e: ExtensionEvent) => {
     if (e.type === 'twitter') {
       console.log('got twitter event')
-      twitterRequestHandling(e.payload)
+      try {
+        await twitterRequestHandling(e.payload)
+      } catch (e) {
+        port.postMessage(createEvent('twitter-unresponsive'))
+      }
+    }
+  })
+
+  port.onMessage.addListener((e: ExtensionEvent) => {
+    if (e.type === 'twitter-stop') {
+      console.log('got stop twitter event')
+      if (streamReader) {
+        streamReader.cancel()
+      }
     }
   })
 })

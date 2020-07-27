@@ -4,4 +4,10 @@ class MissingCredentials extends Error {
   }
 }
 
-export { MissingCredentials }
+class NoResponse extends Error {
+  constructor(message: string) {
+    super(message)
+  }
+}
+
+export { MissingCredentials, NoResponse }

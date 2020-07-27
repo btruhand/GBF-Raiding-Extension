@@ -1,4 +1,4 @@
-export function createEvent(type: string, payload: any): ExtensionEvent {
+export function createEvent(type: string, payload?: any): ExtensionEvent {
   return { type, payload }
 }
 

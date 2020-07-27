@@ -36,12 +36,18 @@ function App() {
       }
     } else console.log("no port currently")
   }
+  const stopTwitter = async () => {
+    if (portRef.current.port) {
+      portRef.current.port.postMessage(createEvent('twitter-stop'))
+    } else console.log("no port currently")
+  }
 
   return (
     <div className="App">
       <button onClick={startBackground}>Start background</button>
       <button onClick={stopBackground}>Stop background</button>
       <button onClick={startTwitter}>Start Twitter</button>
+      <button onClick={stopTwitter}>Stop Twitter</button>
     </div>
   );
 }
