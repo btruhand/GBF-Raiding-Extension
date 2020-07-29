@@ -1,0 +1,14 @@
+.list-raids {
+    display: grid;
+    width: 100%;
+    grid-template-columns: repeat(10, minmax(100px, 1fr));
+    grid-auto-rows: 100px;
+
+    .raid-info {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        text-align: center;
+        border: 1px solid darkblue;
+    }
+}

@@ -6,6 +6,11 @@
             "dom.iterable",
             "esnext"
         ],
+        "plugins": [
+            {
+                "name": "typescript-plugin-css-modules"
+            }
+        ],
         "allowJs": true,
         "skipLibCheck": true,
         "esModuleInterop": true,
@@ -23,7 +28,11 @@
             "@/*": [
                 "./*"
             ]
-        }
+        },
+        "typeRoots": [
+            "./node_modules/@types",
+            "./src/types"
+        ]
     },
     "include": [
         "src"
