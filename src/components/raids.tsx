@@ -1,7 +1,9 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useReducer, useRef, RefObject, MutableRefObject } from 'react'
 import { RaidBoss } from '@/lib/raids';
 import styles from '@/styles/raids.module.scss';
-import { store, get } from '@/lib/storage'
+import { store, get, getCredentials } from '@/lib/storage'
+import { appTwitterInstance } from '@/lib/twitter'
+import Twitter, { TwitterLabs } from 'twitter-lite';
 
 function getChosenRaid(raidName: string): Promise<any> {
     return get(raidName).then(items => items[raidName])
@@ -12,7 +14,7 @@ function storeChosenRaid(raidName: string, chosen: boolean) {
     return store(raidName, chosen)
 }
 
-function RaidDisplay(props: { boss: RaidBoss }) {
+function RaidDisplay(props: { boss: RaidBoss, twitterRef: RefObject<TwitterLabs | null> }) {
     const [chosen, setChosen] = useState(false)
     const uniqueName = props.boss.uniqueName();
 
@@ -24,6 +26,7 @@ function RaidDisplay(props: { boss: RaidBoss }) {
     return (
         <div key={uniqueName} className={`${styles['raid-info']} ${computedOnClass}`}
             onClick={async () => {
+                if (!props.twitterRef.current) { console.log('still empty ref'); return; }
                 await storeChosenRaid(uniqueName, !chosen) // store choice
                 setChosen(!chosen) // toggle for class computation
             }}>
@@ -34,11 +37,24 @@ function RaidDisplay(props: { boss: RaidBoss }) {
 }
 
 function RaidsList(props: { difficulty: string, data: RaidBoss[] }) {
+    const twitterRef: MutableRefObject<TwitterLabs | null> = useRef<TwitterLabs>(null)
+    const interval = setInterval(async () => {
+        const [consumerKey, secretKey] = await getCredentials()
+        if (!consumerKey || !secretKey) {
+            console.warn('twitter credentials not yet set, unable to do certain operations')
+            return;
+        }
+        console.log(`credentials ${consumerKey}, ${secretKey}`)
+        const [app, _] = await appTwitterInstance(consumerKey, secretKey)
+        twitterRef.current = app.withLabs()
+        clearInterval(interval);
+    }, 500);
+
     return (
         <div>
             <p>{props.difficulty}</p>
             <div className={styles['list-raids']}>
-                {props.data.map(boss => <RaidDisplay boss={boss} />)}
+                {props.data.map(boss => <RaidDisplay boss={boss} twitterRef={twitterRef} />)}
             </div>
         </div>
     )
