@@ -10,11 +10,11 @@ function getKeys(keys: string[], cb: (items: { [key: string]: any }) => void) {
 }
 
 const promisifiedStore = (key: string, value: any) => new Promise((resolve: () => void, _) => {
-  chrome.storage.local.set({ key: value }, resolve)
+  chrome.storage.local.set({ [key]: value }, resolve)
 })
-const promisifiedStoreAppCredentials = (consumerKey: string, consumerSecret: string) => new Promise((resolve, _) => {
-  storeAppCredentials(consumerKey, consumerSecret, resolve)
-})
+const promisifiedStoreAppCredentials = (consumerKey: string, consumerSecret: string) =>
+  Promise.all([promisifiedStore(CONSUMER_KEY_KEY, consumerKey), promisifiedStore(CONSUMER_SECRET_KEY, consumerSecret)])
+
 const promisifiedGet = (...keys: string[]) => new Promise((resolve: (items: { [key: string]: any }) => void, _) => {
   getKeys(keys, resolve)
 })

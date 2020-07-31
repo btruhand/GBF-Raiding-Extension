@@ -30,9 +30,9 @@ function TwitterKeyStore() {
   const apiKey = useRef<HTMLInputElement>(null)
   const secretKey = useRef<HTMLInputElement>(null)
   const onSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-    const apiKeyValue = apiKey.current && apiKey.current.value
-    const secretKeyValue = secretKey.current && secretKey.current.value
-    storeCredentials(apiKeyValue as string, secretKeyValue as string).then(async () => {
+    const apiKeyValue = apiKey.current!.value
+    const secretKeyValue = secretKey.current!.value
+    storeCredentials(apiKeyValue, secretKeyValue).then(async () => {
       if (chrome.runtime.lastError) {
         console.error('an error happened when trying to set API keys: ' + chrome.runtime.lastError)
       } else {
