@@ -34,7 +34,7 @@ const raids = {
     new RaidBoss(200, 'Lindwurm', 'リンドヴルム'),
     new RaidBoss(150, 'Proto Bahamut', 'プロトバハムート'),
     new RaidBoss(200, 'Akasha', 'アーカーシャ'),
-    new RaidBoss(200, 'The Four Primarchs', '四大天司ＨＬ'),
+    new RaidBoss(200, 'The Four Primarchs', '四大天司ＨＬ', false),
     new RaidBoss(200, 'Grand Order', 'ジ・オーダー・グランデ'),
     new RaidBoss(200, 'Ultimate Bahamut', 'アルティメットバハムート'),
     new RaidBoss(250, 'Lucilius', 'ルシファー'),
