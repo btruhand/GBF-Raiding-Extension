@@ -1,5 +1,4 @@
 import { RaidBoss } from './raids'
-import { Optional } from './utils'
 
 const CONSUMER_KEY_KEY = 'twitter-consumer-key'
 const CONSUMER_SECRET_KEY = 'twitter-secret-key'
@@ -43,7 +42,7 @@ const getCredentials = () => {
  * @return promise of a boss's associated rule ID (if it exists)
  */
 function getChosenRaid(boss: RaidBoss) {
-  return promisifiedGet<string | undefined>(boss.uniqueName()).then(items => {
+  return promisifiedGet<string[] | undefined>(boss.uniqueName()).then(items => {
     return items[boss.uniqueName()]
   })
 }
@@ -51,10 +50,10 @@ function getChosenRaid(boss: RaidBoss) {
 /**
  * Store a chosen raid with its associated rule ID
  * @param boss chosen raid boss
- * @param ruleId rule ID for raid boss
+ * @param ruleIds rule ID for raid boss
  */
-function storeChosenRaid(boss: RaidBoss, ruleId: string) {
-  return promisifiedStore(boss.uniqueName(), ruleId)
+function storeChosenRaid(boss: RaidBoss, ruleIds: string[]) {
+  return promisifiedStore(boss.uniqueName(), ruleIds)
 }
 
 function clearChosenRaid(boss: RaidBoss) {

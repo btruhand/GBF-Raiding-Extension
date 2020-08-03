@@ -30,7 +30,7 @@ class RaidBoss {
   }
 
   get japaneseSearchTerm(): string {
-    if (this.searchWithLevel) return `Lvl ${this.level} ${this.jpnName}`
+    if (this.searchWithLevel) return `Lv${this.level} ${this.jpnName}`
     else return this.jpnName
   }
 }

@@ -1,9 +1,7 @@
-import Twitter from 'twitter-lite'
 import { ExtensionEvent, createEvent } from '@/lib/events'
 import { NoResponse } from '@/lib/exceptions'
-import { get } from '@/lib/storage'
-import raids from '@/data/raids'
 import { appTwitterInstance } from './lib/twitter'
+import Twitter from 'twitter-lite'
 
 let streamReader: ReadableStreamDefaultReader<Uint8Array> | null
 
@@ -33,14 +31,15 @@ function twitterStreamHandler(response: Response) {
 
 async function twitterRequestHandling(credentials: [string, string]) {
   console.log(`Credentials ${credentials}`)
-  const [app, bearerToken] = await appTwitterInstance(credentials[0], credentials[1])
-
-  const appWithLabs = app.withLabs();
-  appWithLabs.addRules([{ value: '#TrumpIsACompleteFailure' }]);
+  const client = new Twitter({
+    consumer_key: credentials[0],
+    consumer_secret: credentials[1]
+  })
+  const bearerToken = await client.getBearerToken()
 
   // see: https://developer.mozilla.org/en-US/docs/Web/API/Streams_API/Using_readable_streams#Consuming_a_fetch_as_a_stream
   const headers = new Headers();
-  headers.append('Authorization', 'Bearer ' + bearerToken);
+  headers.append('Authorization', 'Bearer ' + bearerToken.access_token);
   const response = fetch('https://api.twitter.com/labs/1/tweets/stream/filter', { method: 'GET', headers: headers })
   return response.then(twitterStreamHandler)
 }
@@ -65,8 +64,6 @@ chrome.runtime.onConnect.addListener(port => {
   port.onMessage.addListener(async (e: ExtensionEvent) => {
     if (e.type === 'twitter') {
       console.log('got twitter event')
-      const raidNames = raids['high-level'].map(v => v.uniqueName())
-      const chosenStatuses = await get(...raidNames);
       try {
         await twitterRequestHandling(e.payload)
       } catch (e) {

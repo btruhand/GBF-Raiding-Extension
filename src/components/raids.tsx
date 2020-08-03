@@ -8,40 +8,47 @@ import { AssertionError } from 'assert';
 import { Optional } from '@/lib/utils';
 
 async function chooseRaidHandler(twitterLabs: TwitterLabs, boss: RaidBoss,
-    setRuleId: Dispatch<SetStateAction<string>>) {
-    // TODO apparently number of rules that can be added is limited, so should handle that somewhere
+    setRuleIds: Dispatch<SetStateAction<string[]>>) {
+    // TODO apparently number of rules that can be added is limited (10 currently), so should handle that somewhere
     // if it is made chosen then add rule
     // call Twitter API
-    return twitterLabs.addRules([Twitter.labsFilterStreamRule(boss.englishSearchTerm)])
+    const rules = [
+        Twitter.labsFilterStreamRule(boss.englishSearchTerm),
+        Twitter.labsFilterStreamRule(boss.japaneseSearchTerm)
+    ]
+    return twitterLabs.addRules(rules)
         .then(async response => {
             // @ts-ignore
-            const ruleId: string = Optional.of<{ id: string }[]>(response.data).apply(d => d[0].id)
-            if (!ruleId) throw new AssertionError({ message: 'rule ID unexpectedly does not exist in response' })
-            console.info('successfully registered raid to Twitter rules with ID', ruleId)
-            await Promise.all([storeChosenRaid(boss, ruleId), setRuleId(ruleId)])
-        }).catch(e => console.error('an error occurred when adding Twitter rule for chosen raid', e))
+            const ruleIds: string[] = Optional.of<{ id: string }[]>(response.data).apply(d => d.map(v => v.id))
+            if (!ruleIds) throw new AssertionError({ message: 'rule ID unexpectedly does not exist in response' })
+            console.info('successfully registered raid to Twitter rules with IDs', ruleIds)
+            await Promise.all([storeChosenRaid(boss, ruleIds), setRuleIds(ruleIds)])
+        })
 }
 
 async function unchooseRaidHandler(twitterLabs: TwitterLabs, boss: RaidBoss,
-    ruleId: string, setRuleId: Dispatch<SetStateAction<string>>) {
-    return twitterLabs.deleteRules([ruleId])
+    ruleIds: string[], setRuleIds: Dispatch<SetStateAction<string[]>>) {
+    return twitterLabs.deleteRules(ruleIds)
         .then(async response => {
             // @ts-ignore
             const deleted = Optional.of<{ summary: { deleted: Number } }>(response.meta).apply(d => d.summary.deleted)
-            if (deleted !== 1) throw new AssertionError({ message: 'number of rules deleted is not 1!' })
-            console.info('successfully removed raid from Twitter rules with ID', ruleId)
-            await Promise.all([clearChosenRaid(boss), setRuleId('')])
-        }).catch(e => console.error('an error occurred when trying to delete Twitter rules', e))
+            if (deleted !== 2) throw new AssertionError({ message: 'number of rules deleted is not 2!' })
+            console.info('successfully removed raid from Twitter rules with ID', ruleIds)
+            // clear
+            await Promise.all([clearChosenRaid(boss), setRuleIds([])])
+        })
 }
 
 function RaidDisplay(props: { boss: RaidBoss, twitterRef: RefObject<TwitterLabs | null> }) {
     const [chosen, setChosen] = useState(false)
-    const [ruleId, setRuleId] = useState('')
+    const [ruleIds, setRuleIds] = useState<string[]>([])
     const uniqueName = props.boss.uniqueName();
 
     useEffect(() => {
-        getChosenRaid(props.boss).then(ruleId => {
-            setRuleId(Optional.of(ruleId as string).orElse(''))
+        getChosenRaid(props.boss).then(ruleIds => {
+            const currentRuleIds = Optional.of(ruleIds).orElse([])
+            setChosen(currentRuleIds!.length !== 0)
+            setRuleIds(currentRuleIds!)
         })
     }, [])
 
@@ -53,12 +60,17 @@ function RaidDisplay(props: { boss: RaidBoss, twitterRef: RefObject<TwitterLabs 
                 // TODO console should be modified with modal or something
                 if (!props.twitterRef.current) { console.log('still empty ref'); return; }
                 const twitterLabs = props.twitterRef.current
-                if (!chosen) {
-                    await chooseRaidHandler(twitterLabs, boss, setRuleId)
-                } else {
-                    await unchooseRaidHandler(twitterLabs, boss, ruleId, setRuleId)
+                try {
+                    if (!chosen) {
+                        await chooseRaidHandler(twitterLabs, boss, setRuleIds)
+                    } else {
+                        await unchooseRaidHandler(twitterLabs, boss, ruleIds, setRuleIds)
+                    }
+                    setChosen(!chosen) // toggle for class computation
+                } catch (e) {
+                    // TODO use model or something for error
+                    console.error('error occurred when toggling chosen status of raid', e)
                 }
-                setChosen(!chosen) // toggle for class computation
             }}>
             <p>{props.boss.englishName()}</p>
             <p>{props.boss.japaneseName()}</p>
