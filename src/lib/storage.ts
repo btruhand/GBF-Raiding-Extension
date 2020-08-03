@@ -42,7 +42,7 @@ const getCredentials = () => {
  * @return promise of a boss's associated rule ID (if it exists)
  */
 function getChosenRaid(boss: RaidBoss) {
-  return promisifiedGet<string[] | undefined>(boss.uniqueName()).then(items => {
+  return promisifiedGet<string | undefined>(boss.uniqueName()).then(items => {
     return items[boss.uniqueName()]
   })
 }
@@ -52,8 +52,8 @@ function getChosenRaid(boss: RaidBoss) {
  * @param boss chosen raid boss
  * @param ruleIds rule ID for raid boss
  */
-function storeChosenRaid(boss: RaidBoss, ruleIds: string[]) {
-  return promisifiedStore(boss.uniqueName(), ruleIds)
+function storeChosenRaid(boss: RaidBoss, ruleId: string) {
+  return promisifiedStore(boss.uniqueName(), ruleId)
 }
 
 function clearChosenRaid(boss: RaidBoss) {

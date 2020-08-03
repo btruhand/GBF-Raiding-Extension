@@ -24,14 +24,9 @@ class RaidBoss {
     return `Lvl ${this.level} ${this.jpnName}`
   }
 
-  get englishSearchTerm(): string {
-    if (this.searchWithLevel) return `Lvl ${this.level} ${this.engName}`
-    else return this.engName
-  }
-
-  get japaneseSearchTerm(): string {
-    if (this.searchWithLevel) return `Lv${this.level} ${this.jpnName}`
-    else return this.jpnName
+  get searchTerm(): string {
+    if (this.searchWithLevel) return `(Lvl ${this.level} ${this.engName}) OR (Lv${this.level} ${this.jpnName})`
+    else return `${this.engName} OR ${this.jpnName}`
   }
 }
 

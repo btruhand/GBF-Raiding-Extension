@@ -8,47 +8,43 @@ import { AssertionError } from 'assert';
 import { Optional } from '@/lib/utils';
 
 async function chooseRaidHandler(twitterLabs: TwitterLabs, boss: RaidBoss,
-    setRuleIds: Dispatch<SetStateAction<string[]>>) {
+    setRuleId: Dispatch<SetStateAction<string>>) {
     // TODO apparently number of rules that can be added is limited (10 currently), so should handle that somewhere
     // if it is made chosen then add rule
     // call Twitter API
-    const rules = [
-        Twitter.labsFilterStreamRule(boss.englishSearchTerm),
-        Twitter.labsFilterStreamRule(boss.japaneseSearchTerm)
-    ]
-    return twitterLabs.addRules(rules)
+    return twitterLabs.addRules([Twitter.labsFilterStreamRule(boss.searchTerm)])
         .then(async response => {
             // @ts-ignore
-            const ruleIds: string[] = Optional.of<{ id: string }[]>(response.data).apply(d => d.map(v => v.id))
-            if (!ruleIds) throw new AssertionError({ message: 'rule ID unexpectedly does not exist in response' })
-            console.info('successfully registered raid to Twitter rules with IDs', ruleIds)
-            await Promise.all([storeChosenRaid(boss, ruleIds), setRuleIds(ruleIds)])
+            const ruleId: string = Optional.of<{ id: string }[]>(response.data).apply(d => d[0].id)
+            if (!ruleId) throw new AssertionError({ message: 'rule ID unexpectedly does not exist in response' })
+            console.info('successfully registered raid to Twitter rules with ID', ruleId)
+            await Promise.all([storeChosenRaid(boss, ruleId), setRuleId(ruleId)])
         })
 }
 
 async function unchooseRaidHandler(twitterLabs: TwitterLabs, boss: RaidBoss,
-    ruleIds: string[], setRuleIds: Dispatch<SetStateAction<string[]>>) {
-    return twitterLabs.deleteRules(ruleIds)
+    ruleId: string, setRuleId: Dispatch<SetStateAction<string>>) {
+    return twitterLabs.deleteRules([ruleId])
         .then(async response => {
             // @ts-ignore
             const deleted = Optional.of<{ summary: { deleted: Number } }>(response.meta).apply(d => d.summary.deleted)
-            if (deleted !== 2) throw new AssertionError({ message: 'number of rules deleted is not 2!' })
-            console.info('successfully removed raid from Twitter rules with ID', ruleIds)
+            if (deleted !== 1) throw new AssertionError({ message: 'number of rules deleted is not 1!' })
+            console.info('successfully removed raid from Twitter rules with ID', ruleId)
             // clear
-            await Promise.all([clearChosenRaid(boss), setRuleIds([])])
+            await Promise.all([clearChosenRaid(boss), setRuleId('')])
         })
 }
 
 function RaidDisplay(props: { boss: RaidBoss, twitterRef: RefObject<TwitterLabs | null> }) {
     const [chosen, setChosen] = useState(false)
-    const [ruleIds, setRuleIds] = useState<string[]>([])
+    const [ruleId, setRuleId] = useState<string>('')
     const uniqueName = props.boss.uniqueName();
 
     useEffect(() => {
-        getChosenRaid(props.boss).then(ruleIds => {
-            const currentRuleIds = Optional.of(ruleIds).orElse([])
-            setChosen(currentRuleIds!.length !== 0)
-            setRuleIds(currentRuleIds!)
+        getChosenRaid(props.boss).then(ruleId => {
+            const currentRuleId = Optional.of(ruleId).orElse('')
+            setChosen(currentRuleId ? true : false)
+            setRuleId(currentRuleId!)
         })
     }, [])
 
@@ -62,9 +58,9 @@ function RaidDisplay(props: { boss: RaidBoss, twitterRef: RefObject<TwitterLabs 
                 const twitterLabs = props.twitterRef.current
                 try {
                     if (!chosen) {
-                        await chooseRaidHandler(twitterLabs, boss, setRuleIds)
+                        await chooseRaidHandler(twitterLabs, boss, setRuleId)
                     } else {
-                        await unchooseRaidHandler(twitterLabs, boss, ruleIds, setRuleIds)
+                        await unchooseRaidHandler(twitterLabs, boss, ruleId, setRuleId)
                     }
                     setChosen(!chosen) // toggle for class computation
                 } catch (e) {
