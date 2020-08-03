@@ -41,10 +41,10 @@ function RaidsList(props: { difficulty: string, data: RaidBoss[] }) {
     const interval = setInterval(async () => {
         const [consumerKey, secretKey] = await getCredentials()
         if (!consumerKey || !secretKey) {
-            console.warn('twitter credentials not yet set, unable to do certain operations')
+            // credentials not available in storage
             return;
         }
-        console.log(`credentials ${consumerKey}, ${secretKey}`)
+        console.info('Twitter API credentials found, will attempt to authorize')
         const [app, _] = await appTwitterInstance(consumerKey, secretKey)
         twitterRef.current = app.withLabs()
         clearInterval(interval);
