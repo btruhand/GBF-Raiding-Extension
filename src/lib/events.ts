@@ -1,8 +1,8 @@
-export function createEvent(type: string, payload?: any): ExtensionEvent {
+export function createEvent<T>(type: string, payload?: T): ExtensionEvent<T> {
   return { type, payload }
 }
 
-export interface ExtensionEvent {
+export interface ExtensionEvent<T> {
   type: string,
-  payload?: any
+  payload?: T
 }

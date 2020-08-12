@@ -15,3 +15,11 @@ export async function appTwitterInstance(consumerKey: string, secretKey: string)
     bearer_token: bearerToken.access_token
   }), bearerToken.access_token]
 }
+
+// see: https://developer.mozilla.org/en-US/docs/Web/API/Streams_API/Using_readable_streams#Consuming_a_fetch_as_a_stream
+export function startStream(bearerToken: string) {
+  const headers = new Headers();
+  headers.append('Authorization', 'Bearer ' + bearerToken);
+  return fetch('https://api.twitter.com/labs/1/tweets/stream/filter',
+    { method: 'GET', headers: headers })
+}

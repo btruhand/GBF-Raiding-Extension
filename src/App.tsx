@@ -1,7 +1,7 @@
 import React, { useRef, MutableRefObject } from 'react';
 import { PortRef } from '@/types/custom'
 import { getCredentials } from './lib/storage';
-import { createEvent } from './lib/events';
+import { createEvent, ExtensionEvent } from './lib/events';
 
 function App() {
   const portRef: MutableRefObject<PortRef> = useRef({ port: null })
@@ -33,6 +33,8 @@ function App() {
       } else {
         console.log('posting twitter request')
         portRef.current.port.postMessage(createEvent('twitter', credentials))
+        portRef.current.port.onMessage.addListener((e: ExtensionEvent<[string, string]>) =>
+          console.log('event received', e))
       }
     } else console.log("no port currently")
   }

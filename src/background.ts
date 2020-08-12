@@ -1,11 +1,12 @@
 import { ExtensionEvent, createEvent } from '@/lib/events'
 import { NoResponse } from '@/lib/exceptions'
-import { appTwitterInstance } from './lib/twitter'
 import Twitter from 'twitter-lite'
+import { parseTweet } from './lib/raids'
+import { startStream } from './lib/twitter'
 
 let streamReader: ReadableStreamDefaultReader<Uint8Array> | null
 
-function twitterStreamHandler(response: Response) {
+function twitterStreamHandler(response: Response, port: chrome.runtime.Port) {
   function readIndefinite() {
     if (streamReader) {
       streamReader.read().then(function handle({ done, value }): any {
@@ -13,7 +14,11 @@ function twitterStreamHandler(response: Response) {
           console.log('stopping')
           streamReader = null
         } else {
-          console.log('value', new TextDecoder("utf-8").decode(value))
+          const tweet = new TextDecoder("utf-8").decode(value)
+          const parsedTweet = parseTweet(tweet)
+          if (parsedTweet) {
+            port.postMessage(createEvent('found-raid', parsedTweet))
+          }
           return readIndefinite()
         }
       }).catch(reason => {
@@ -36,12 +41,7 @@ async function twitterRequestHandling(credentials: [string, string]) {
     consumer_secret: credentials[1]
   })
   const bearerToken = await client.getBearerToken()
-
-  // see: https://developer.mozilla.org/en-US/docs/Web/API/Streams_API/Using_readable_streams#Consuming_a_fetch_as_a_stream
-  const headers = new Headers();
-  headers.append('Authorization', 'Bearer ' + bearerToken.access_token);
-  const response = fetch('https://api.twitter.com/labs/1/tweets/stream/filter', { method: 'GET', headers: headers })
-  return response.then(twitterStreamHandler)
+  return startStream(bearerToken.access_token)
 }
 
 chrome.runtime.onInstalled.addListener((details) => {
@@ -57,22 +57,22 @@ chrome.runtime.onConnect.addListener(port => {
     console.log(`port ${port.name} is disconnecting`)
   })
 
-  port.onMessage.addListener((e: ExtensionEvent) => {
+  port.onMessage.addListener((e: ExtensionEvent<string>) => {
     console.log(`background got event ${e}`)
   })
 
-  port.onMessage.addListener(async (e: ExtensionEvent) => {
+  port.onMessage.addListener(async (e: ExtensionEvent<[string, string]>) => {
     if (e.type === 'twitter') {
       console.log('got twitter event')
       try {
-        await twitterRequestHandling(e.payload)
+        twitterRequestHandling(e.payload!).then(response => twitterStreamHandler(response, port))
       } catch (e) {
         port.postMessage(createEvent('twitter-unresponsive'))
       }
     }
   })
 
-  port.onMessage.addListener((e: ExtensionEvent) => {
+  port.onMessage.addListener((e: ExtensionEvent<any>) => {
     if (e.type === 'twitter-stop') {
       console.log('got stop twitter event')
       if (streamReader) {

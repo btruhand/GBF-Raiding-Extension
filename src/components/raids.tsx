@@ -1,7 +1,7 @@
-import React, { useState, useEffect, useReducer, useRef, RefObject, MutableRefObject, Dispatch, SetStateAction } from 'react'
+import React, { useState, useEffect, useRef, RefObject, MutableRefObject, Dispatch, SetStateAction } from 'react'
 import { RaidBoss } from '@/lib/raids';
 import styles from '@/styles/raids.module.scss';
-import { store, get, getCredentials, storeChosenRaid, getChosenRaid, clearChosenRaid } from '@/lib/storage'
+import { getCredentials, storeChosenRaid, getChosenRaid, clearChosenRaid } from '@/lib/storage'
 import { appTwitterInstance } from '@/lib/twitter'
 import Twitter, { TwitterLabs } from 'twitter-lite';
 import { AssertionError } from 'assert';
@@ -83,7 +83,7 @@ function RaidsList(props: { difficulty: string, data: RaidBoss[] }) {
             return;
         }
         console.info('Twitter API credentials found, will attempt to authorize')
-        const [app, _] = await appTwitterInstance(consumerKey, secretKey)
+        const [app] = await appTwitterInstance(consumerKey, secretKey)
         twitterRef.current = app.withLabs()
         clearInterval(interval);
     }, 2000);
