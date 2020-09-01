@@ -1,10 +1,28 @@
-import React, { useRef, MutableRefObject } from 'react';
+import React, { useRef, MutableRefObject, useState, useEffect } from 'react';
 import { PortRef } from '@/types/custom'
-import { getCredentials } from './lib/storage';
-import { createEvent, ExtensionEvent } from './lib/events';
+import { getCredentials } from '@/lib/storage';
+import { createEvent, ExtensionEvent } from '@/lib/events';
+import { TweetedRaid } from '@/types/custom'
+import styles from '@/styles/app.module.scss'
+
+function FoundRaids(props: { found: TweetedRaid[] }) {
+  const raidList = props.found.map(r =>
+    <div key={r[0]} className={styles['display-found-raid']}>
+      <p>{r[2]}</p>
+      <p>{r[1]}</p>
+    </div>)
+
+  return (
+    <div className="FoundRaids">
+      {raidList}
+    </div>
+  )
+}
 
 function App() {
   const portRef: MutableRefObject<PortRef> = useRef({ port: null })
+  const [foundRaids, setFoundRaids] = useState<TweetedRaid[]>([])
+
   const startBackground = () => {
     if (!portRef.current.port) {
       const port = chrome.runtime.connect({ name: "gbf_raiding_extension" })
@@ -33,8 +51,11 @@ function App() {
       } else {
         console.log('posting twitter request')
         portRef.current.port.postMessage(createEvent('twitter', credentials))
-        portRef.current.port.onMessage.addListener((e: ExtensionEvent<[string, string]>) =>
-          console.log('event received', e))
+        portRef.current.port.onMessage.addListener((e: ExtensionEvent<TweetedRaid>) => {
+          console.log('event received', e)
+          console.log('current found raids', foundRaids)
+          setFoundRaids(prevFoundRaids => [...prevFoundRaids, e.payload!])
+        })
       }
     } else console.log("no port currently")
   }
@@ -50,6 +71,8 @@ function App() {
       <button onClick={stopBackground}>Stop background</button>
       <button onClick={startTwitter}>Start Twitter</button>
       <button onClick={stopTwitter}>Stop Twitter</button>
+
+      <FoundRaids found={foundRaids} />
     </div>
   );
 }

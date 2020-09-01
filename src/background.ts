@@ -64,11 +64,12 @@ chrome.runtime.onConnect.addListener(port => {
   port.onMessage.addListener(async (e: ExtensionEvent<[string, string]>) => {
     if (e.type === 'twitter') {
       console.log('got twitter event')
-      try {
-        twitterRequestHandling(e.payload!).then(response => twitterStreamHandler(response, port))
-      } catch (e) {
-        port.postMessage(createEvent('twitter-unresponsive'))
-      }
+      twitterRequestHandling(e.payload!)
+        .then(response => twitterStreamHandler(response, port))
+        .catch(e => {
+          console.log('an error occurred when handling twitter request', e)
+          port.postMessage(createEvent('twitter-unresponsive'))
+        })
     }
   })
 

@@ -1,3 +1,5 @@
+import { TweetedRaid } from '@/types/custom';
+
 class RaidBoss {
 
   private level: Number
@@ -40,7 +42,7 @@ class RaidBoss {
  * @param returns an array of battle ID and the raid name or null if tweet data cannot be
  * parsed as expected
  */
-function parseTweet(tweetData: string): [string, string] | null {
+function parseTweet(tweetData: string): TweetedRaid | null {
   if (tweetData.length < 10) {
     // unlikely to be an actual tweet data point
     console.log('empty tweet data');
@@ -64,7 +66,7 @@ function parseTweet(tweetData: string): [string, string] | null {
       const battleId = match[0]
       const splittedTweet = tweetText.split('\n')
       const raidName = splittedTweet[splittedTweet.length - 2] // expected to be raid name, hack
-      return [battleId, raidName]
+      return [tweetJson.data.id, battleId, raidName]
     }
   }
   return null
