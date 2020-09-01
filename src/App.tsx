@@ -5,13 +5,28 @@ import { createEvent, ExtensionEvent } from '@/lib/events';
 import { TweetedRaid } from '@/types/custom'
 import styles from '@/styles/app.module.scss'
 
-function FoundRaids(props: { found: TweetedRaid[] }) {
-  const raidList = props.found.map(r =>
-    <div key={r[0]} className={styles['display-found-raid']}>
-      <p>{r[2]}</p>
-      <p>{r[1]}</p>
-    </div>)
+const copyRaidId = (raidId: string) => {
+  return navigator.clipboard.writeText(raidId)
+    .then(() => console.log('successfully copied to clipboard', raidId))
+    .catch(() => console.error('unsuccessful at copying to clipboard', raidId))
+}
 
+function ListedRaid(props: { key: string, battleId: string, raidName: string }) {
+  const [clicked, setClicked] = useState(false)
+
+  const clickedStyle = clicked ? styles['raid-clicked'] : ''
+  return (
+    <div key={props.key} className={`${styles['display-found-raid']} ${clickedStyle}`} onClick={() => {
+      copyRaidId(props.battleId).then(() => setClicked(true))
+    }}>
+      <p>{props.raidName}</p>
+      <p>{props.battleId}</p>
+    </div>
+  )
+}
+
+function FoundRaids(props: { found: TweetedRaid[] }) {
+  const raidList = props.found.map(r => <ListedRaid key={r[0]} battleId={r[1]} raidName={r[2]}></ListedRaid>)
   return (
     <div className="FoundRaids">
       {raidList}
