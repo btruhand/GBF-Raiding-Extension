@@ -26,7 +26,7 @@ function ListedRaid(props: { key: string, battleId: string, raidName: string }) 
 }
 
 function FoundRaids(props: { found: TweetedRaid[] }) {
-  const raidList = props.found.map(r => <ListedRaid key={r[0]} battleId={r[1]} raidName={r[2]}></ListedRaid>)
+  const raidList = props.found.map(r => <ListedRaid key={r.id} battleId={r.battleId} raidName={r.raidName} />)
   return (
     <div className="FoundRaids">
       {raidList}

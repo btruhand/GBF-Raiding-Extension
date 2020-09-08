@@ -37,27 +37,33 @@ const getCredentials = () => {
 }
 
 /**
- * Gets chosen raid rule ID
- * @param boss raid boss
- * @return promise of a boss's associated rule ID (if it exists)
+ * Gets chosen raids
+ * @param bosses array of bosses
+ * @return dictionary of found bosses, with key being the boss unique name
  */
-function getChosenRaid(boss: RaidBoss) {
-  return promisifiedGet<string | undefined>(boss.uniqueName()).then(items => {
-    return items[boss.uniqueName()]
-  })
+function getChosenRaids(...bosses: RaidBoss[]) {
+  const keys = bosses.map(boss => boss.uniqueName())
+  return promisifiedGet(...keys)
 }
 
 /**
  * Store a chosen raid with its associated rule ID
  * @param boss chosen raid boss
- * @param ruleIds rule ID for raid boss
  */
-function storeChosenRaid(boss: RaidBoss, ruleId: string) {
-  return promisifiedStore(boss.uniqueName(), ruleId)
+function storeChosenRaid(boss: RaidBoss) {
+  return promisifiedStore(boss.uniqueName(), true)
 }
 
 function clearChosenRaid(boss: RaidBoss) {
   return promisifiedRemove(boss.uniqueName())
+}
+
+async function isStored(key: string) {
+  return Object.keys(await promisifiedGet(key)).length !== 0
+}
+
+function isBossStored(boss: RaidBoss) {
+  return isStored(boss.uniqueName())
 }
 
 export {
@@ -65,7 +71,9 @@ export {
   promisifiedGet as get,
   getCredentials,
   promisifiedStoreAppCredentials as storeCredentials,
-  getChosenRaid,
+  getChosenRaids as getChosenRaids,
   storeChosenRaid,
-  clearChosenRaid
+  clearChosenRaid,
+  isStored,
+  isBossStored
 }

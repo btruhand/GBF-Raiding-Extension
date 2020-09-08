@@ -6,29 +6,42 @@ class RaidBoss {
   private engName: string
   private jpnName: string
   private searchWithLevel: boolean
+  private engRaidName: string
+  private jpnRaidName: string
 
   constructor(level: Number, engName: string, jpnName: string, searchWithLevel: boolean = true) {
     this.level = level;
     this.engName = engName
     this.jpnName = jpnName
     this.searchWithLevel = searchWithLevel
+    this.engRaidName = `Lvl ${this.level} ${this.engName}`
+    this.jpnRaidName = `Lv${this.level} ${this.jpnName}`
   }
 
-  uniqueName() {
+  uniqueName(): string {
     return `${this.level}-${this.engName}-${this.jpnName}`;
   }
 
-  englishName() {
+  englishName(): string {
     return `Lvl ${this.level} ${this.engName}`
   }
 
-  japaneseName() {
+  japaneseName(): string {
     return `Lvl ${this.level} ${this.jpnName}`
   }
 
   get searchTerm(): string {
     if (this.searchWithLevel) return `"Lvl ${this.level} ${this.engName}" OR "Lv${this.level} ${this.jpnName}"`
     else return `${this.engName} OR ${this.jpnName}`
+  }
+
+  /**
+   * Checks if given raid name is a match for this boss
+   * @param raidName 
+   * @return boolean
+   */
+  is(raidName: string): boolean {
+    return raidName === this.engRaidName || raidName === this.jpnRaidName
   }
 }
 
@@ -45,7 +58,7 @@ class RaidBoss {
 function parseTweet(tweetData: string): TweetedRaid | null {
   if (tweetData.length < 10) {
     // unlikely to be an actual tweet data point
-    console.log('empty tweet data');
+    console.debug('empty tweet data', tweetData);
     return null;
   }
   console.log('tweet', tweetData)
@@ -66,10 +79,22 @@ function parseTweet(tweetData: string): TweetedRaid | null {
       const battleId = match[0]
       const splittedTweet = tweetText.split('\n')
       const raidName = splittedTweet[splittedTweet.length - 2] // expected to be raid name, hack
-      return [tweetJson.data.id, battleId, raidName]
+      return {
+        id: tweetJson.data.id,
+        battleId,
+        raidName
+      }
     }
   }
   return null
 }
 
-export { RaidBoss, parseTweet } 
+function enRaidAnnouncement() {
+  return 'I need backup!'
+}
+
+function jpnRaidAnnouncement() {
+  return '参加者募集！'
+}
+
+export { RaidBoss, parseTweet, enRaidAnnouncement, jpnRaidAnnouncement } 

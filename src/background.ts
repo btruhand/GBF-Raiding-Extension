@@ -2,9 +2,15 @@ import { ExtensionEvent, createEvent } from '@/lib/events'
 import { NoResponse } from '@/lib/exceptions'
 import Twitter from 'twitter-lite'
 import { parseTweet } from './lib/raids'
-import { startStream } from './lib/twitter'
+import { startStream } from '@/lib/twitter'
+import { getChosenRaids } from '@/lib/storage'
+import raids from '@/data/raids'
+import { RaidBoss } from '@/lib/raids'
 
 let streamReader: ReadableStreamDefaultReader<Uint8Array> | null
+
+const highLevelRaids = raids['high-level']
+let applicableBosses: RaidBoss[] = []
 
 function twitterStreamHandler(response: Response, port: chrome.runtime.Port) {
   function readIndefinite() {
@@ -15,9 +21,14 @@ function twitterStreamHandler(response: Response, port: chrome.runtime.Port) {
           streamReader = null
         } else {
           const tweet = new TextDecoder("utf-8").decode(value)
-          const parsedTweet = parseTweet(tweet)
-          if (parsedTweet) {
-            port.postMessage(createEvent('found-raid', parsedTweet))
+          for (const separatedTweet of tweet.split('\r\n')) {
+            const parsedTweet = parseTweet(separatedTweet)
+            if (parsedTweet) {
+              if (applicableBosses.some(boss => boss.is(parsedTweet.raidName))) {
+                // one of the applicable bossesi, so then post
+                port.postMessage(createEvent('found-raid', parsedTweet))
+              }
+            }
           }
           return readIndefinite()
         }
@@ -25,6 +36,9 @@ function twitterStreamHandler(response: Response, port: chrome.runtime.Port) {
         console.error('error occured when streaming from Twitter', reason)
       })
     }
+  }
+  if (streamReader) {
+    throw new Error('streaming is already running');
   }
   if (response.body) {
     streamReader = response.body.getReader();
@@ -44,7 +58,7 @@ async function twitterRequestHandling(credentials: [string, string]) {
   return startStream(bearerToken.access_token)
 }
 
-chrome.runtime.onInstalled.addListener((details) => {
+chrome.runtime.onInstalled.addListener(async (details) => {
   console.log(`onInstalled ID: ${details.id} | prevVersion: ${details.previousVersion} | reason: ${details.reason} ....`);
 });
 
@@ -58,23 +72,28 @@ chrome.runtime.onConnect.addListener(port => {
   })
 
   port.onMessage.addListener((e: ExtensionEvent<string>) => {
-    console.log(`background got event ${e}`)
+    console.log('background got event', e)
   })
 
   port.onMessage.addListener(async (e: ExtensionEvent<[string, string]>) => {
-    if (e.type === 'twitter') {
+    if (e.type === 'twitter' && !streamReader) {
       console.log('got twitter event')
-      twitterRequestHandling(e.payload!)
-        .then(response => twitterStreamHandler(response, port))
-        .catch(e => {
-          console.log('an error occurred when handling twitter request', e)
-          port.postMessage(createEvent('twitter-unresponsive'))
-        })
+      getChosenRaids(...highLevelRaids).then(found => {
+        return highLevelRaids.filter(boss => boss.uniqueName() in found)
+      }).then(bosses => {
+        applicableBosses = bosses
+        twitterRequestHandling(e.payload!)
+          .then(response => twitterStreamHandler(response, port))
+          .catch(e => {
+            console.error('an error occurred when handling twitter request', e)
+            port.postMessage(createEvent('twitter-unresponsive'))
+          })
+      })
     }
   })
 
   port.onMessage.addListener((e: ExtensionEvent<any>) => {
-    if (e.type === 'twitter-stop') {
+    if (e.type === 'twitter-stop' && streamReader) {
       console.log('got stop twitter event')
       if (streamReader) {
         streamReader.cancel()
