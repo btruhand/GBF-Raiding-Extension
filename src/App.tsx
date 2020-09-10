@@ -1,9 +1,11 @@
-import React, { useRef, MutableRefObject, useState, useEffect } from 'react';
+import React, { useRef, MutableRefObject, useState } from 'react';
 import { PortRef } from '@/types/custom'
 import { getCredentials } from '@/lib/storage';
 import { createEvent, ExtensionEvent } from '@/lib/events';
 import { TweetedRaid } from '@/types/custom'
 import styles from '@/styles/app.module.scss'
+import { Modal } from "@/components/modal"
+import { ConsoleWriter } from 'istanbul-lib-report';
 
 const copyRaidId = (raidId: string) => {
   return navigator.clipboard.writeText(raidId)
@@ -86,6 +88,9 @@ function App() {
       <button onClick={stopBackground}>Stop background</button>
       <button onClick={startTwitter}>Start Twitter</button>
       <button onClick={stopTwitter}>Stop Twitter</button>
+      <Modal modalButtonText="modal" modalTitle="Some modal" closeAction={(cb) => { console.log('close'); cb() }}>
+        <p>test test</p>
+      </Modal>
 
       <FoundRaids found={foundRaids} />
     </div>

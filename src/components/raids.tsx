@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef, RefObject, MutableRefObject } from 'react'
-import { RaidBoss } from '@/lib/raids';
-import styles from '@/styles/raids.module.scss';
-import { storeChosenRaid, getChosenRaids, clearChosenRaid, isBossStored } from '@/lib/storage'
-import { TwitterLabs } from 'twitter-lite';
+import { RaidBoss } from '@/lib/raids'
+import styles from '@/styles/raids.module.scss'
+import { storeChosenRaid, clearChosenRaid, isBossStored } from '@/lib/storage'
+import { TwitterLabs } from 'twitter-lite'
 
 function RaidDisplay(props: { boss: RaidBoss, twitterRef: RefObject<TwitterLabs | null> }) {
     const [chosen, setChosen] = useState(false)
@@ -16,10 +16,8 @@ function RaidDisplay(props: { boss: RaidBoss, twitterRef: RefObject<TwitterLabs 
     return (
         <div key={uniqueName} className={`${styles['raid-info']} ${computedOnClass}`}
             onClick={async () => {
-                const boss = props.boss
-                // TODO console should be modified with modal or something
                 const func = !chosen ? storeChosenRaid : clearChosenRaid
-                await func(boss)
+                await func(props.boss)
                 setChosen(!chosen)
             }}>
             <p>{props.boss.englishName()}</p>
