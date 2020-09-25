@@ -47,8 +47,7 @@ function App() {
       if (!port) {
         console.error('unable to connect to receiving end')
       } else {
-        console.log('successfully connected to')
-        port.postMessage('HEY HERE IS A MESSAGE')
+        console.log('successfully connected to port', port)
         portRef.current.port = port
       }
     } else console.log("port has already been created", portRef.current.port)
@@ -89,7 +88,13 @@ function App() {
       <button onClick={stopBackground}>Stop background</button>
       <button onClick={startTwitter}>Start Twitter</button>
       <button onClick={stopTwitter}>Stop Twitter</button>
-      <Modal modalButtonText='Choose raids' modalTitle='Raids' closeAction={(cb) => { console.log('close'); cb() }}>
+      <Modal modalButtonText='Choose raids' modalTitle='Raids' closeAction={(cb) => {
+        console.log('closing');
+        cb()
+        if (portRef.current.port) {
+          portRef.current.port.postMessage(createEvent('change-raid-list'))
+        }
+      }}>
         <RaidsList difficulty='high-level' data={raids['high-level']} />
       </Modal>
 

@@ -61,7 +61,7 @@ function parseTweet(tweetData: string): TweetedRaid | null {
     console.debug('empty tweet data', tweetData);
     return null;
   }
-  console.log('tweet', tweetData)
+  // console.log('tweet', tweetData)
   var tweetJson;
   try {
     tweetJson = JSON.parse(tweetData)

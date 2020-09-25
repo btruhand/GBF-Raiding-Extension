@@ -12,31 +12,41 @@ let streamReader: ReadableStreamDefaultReader<Uint8Array> | null
 const highLevelRaids = raids['high-level']
 let applicableBosses: RaidBoss[] = []
 
+function findUserChosenRaidsFromList(bosses: RaidBoss[]): Promise<RaidBoss[]> {
+  return getChosenRaids(...bosses).then(found => {
+    return bosses.filter(boss => boss.uniqueName() in found)
+  });
+}
+
 function twitterStreamHandler(response: Response, port: chrome.runtime.Port) {
+  function postTweetToApplication(tweet: string) {
+    for (const separatedTweet of tweet.split('\r\n')) {
+      const parsedTweet = parseTweet(separatedTweet)
+      if (parsedTweet) {
+        if (applicableBosses.some(boss => boss.is(parsedTweet.raidName))) {
+          // one of the applicable bosses, so then post
+          port.postMessage(createEvent('found-raid', parsedTweet))
+        }
+      }
+    }
+    return readIndefinite()
+  }
+
   function readIndefinite() {
     if (streamReader) {
-      streamReader.read().then(function handle({ done, value }): any {
+      streamReader.read().then(({ done, value }) => {
         if (done) {
           console.log('stopping')
           streamReader = null
         } else {
-          const tweet = new TextDecoder("utf-8").decode(value)
-          for (const separatedTweet of tweet.split('\r\n')) {
-            const parsedTweet = parseTweet(separatedTweet)
-            if (parsedTweet) {
-              if (applicableBosses.some(boss => boss.is(parsedTweet.raidName))) {
-                // one of the applicable bossesi, so then post
-                port.postMessage(createEvent('found-raid', parsedTweet))
-              }
-            }
-          }
-          return readIndefinite()
+          postTweetToApplication(new TextDecoder('utf-8').decode(value))
         }
       }).catch(reason => {
         console.error('error occured when streaming from Twitter', reason)
       })
     }
   }
+
   if (streamReader) {
     throw new Error('streaming is already running');
   }
@@ -78,9 +88,7 @@ chrome.runtime.onConnect.addListener(port => {
   port.onMessage.addListener(async (e: ExtensionEvent<[string, string]>) => {
     if (e.type === 'twitter' && !streamReader) {
       console.log('got twitter event')
-      getChosenRaids(...highLevelRaids).then(found => {
-        return highLevelRaids.filter(boss => boss.uniqueName() in found)
-      }).then(bosses => {
+      findUserChosenRaidsFromList(highLevelRaids).then(bosses => {
         applicableBosses = bosses
         twitterRequestHandling(e.payload!)
           .then(response => twitterStreamHandler(response, port))
@@ -98,6 +106,18 @@ chrome.runtime.onConnect.addListener(port => {
       if (streamReader) {
         streamReader.cancel()
       }
+    }
+  })
+
+  port.onMessage.addListener((e: ExtensionEvent<any>) => {
+    if (e.type === 'change-raid-list' && streamReader) {
+      if (!streamReader) {
+        console.log('no stream reader currently when changing raid list')
+        return;
+      }
+      findUserChosenRaidsFromList(highLevelRaids).then(bosses => {
+        applicableBosses = bosses;
+      })
     }
   })
 })
