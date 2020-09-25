@@ -4,9 +4,8 @@ import styles from '@/styles/modal.module.scss'
 
 const ModalBody: React.FunctionComponent<{
     children: ReactElementLike,
-    show: boolean,
     onClose: () => void
-}> = ({ children, show, onClose }) => {
+}> = ({ children, onClose }) => {
     return (
         <div>
             {children}
@@ -35,7 +34,7 @@ export function Modal(props: {
             <button onClick={() => setShow(true)}>{props.modalButtonText}</button>
             <div className={className}>
                 <h2>{props.modalTitle}</h2>
-                <ModalBody children={props.children} show={show} onClose={() => props.closeAction(close)} />
+                <ModalBody children={props.children} onClose={() => props.closeAction(close)} />
             </div >
         </div>
     )
@@ -43,6 +42,5 @@ export function Modal(props: {
 
 ModalBody.propTypes = {
     children: PropTypes.element.isRequired,
-    show: PropTypes.bool.isRequired,
     onClose: PropTypes.func.isRequired,
 }

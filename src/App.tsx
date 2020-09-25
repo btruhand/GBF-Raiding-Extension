@@ -29,7 +29,9 @@ function ListedRaid(props: { key: string, battleId: string, raidName: string }) 
 }
 
 function FoundRaids(props: { found: TweetedRaid[] }) {
-  const raidList = props.found.map(r => <ListedRaid key={r.id} battleId={r.battleId} raidName={r.raidName} />)
+  const raidList = props.found.map(r =>
+    <ListedRaid key={r.id} battleId={r.battleId} raidName={r.raidName} />
+  )
   return (
     <div className="FoundRaids">
       {raidList}
@@ -71,7 +73,10 @@ function App() {
         portRef.current.port.onMessage.addListener((e: ExtensionEvent<TweetedRaid>) => {
           console.log('event received', e)
           console.log('current found raids', foundRaids)
-          setFoundRaids(prevFoundRaids => [...prevFoundRaids, e.payload!])
+          setFoundRaids(prevFoundRaids => {
+            const limit = 50; // TODO make this configurable
+            return [e.payload!, ...prevFoundRaids.slice(0, limit - 2)]
+          })
         })
       }
     } else console.log("no port currently")
