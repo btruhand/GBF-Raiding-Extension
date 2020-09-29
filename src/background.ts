@@ -1,11 +1,14 @@
 import { ExtensionEvent, createEvent } from '@/lib/events'
 import { NoResponse } from '@/lib/exceptions'
 import Twitter from 'twitter-lite'
-import { parseTweet } from './lib/raids'
-import { startStream } from '@/lib/twitter'
+import { startStream, parseTweet } from '@/lib/twitter'
+import { extractRaidDetailsFromTweet as extractBattleInfoFromTweet } from '@/lib/raids'
 import { getChosenRaids } from '@/lib/storage'
 import raids from '@/data/raids'
 import { RaidBoss } from '@/lib/raids'
+import { TweetedRaid } from './types/custom'
+import { Optional } from './lib/utils'
+import { create } from 'domain'
 
 let streamReader: ReadableStreamDefaultReader<Uint8Array> | null
 
@@ -20,15 +23,15 @@ function findUserChosenRaidsFromList(bosses: RaidBoss[]): Promise<RaidBoss[]> {
 
 function twitterStreamHandler(response: Response, port: chrome.runtime.Port) {
   function postTweetToApplication(tweet: string) {
-    for (const separatedTweet of tweet.split('\r\n')) {
-      const parsedTweet = parseTweet(separatedTweet)
-      if (parsedTweet) {
-        if (applicableBosses.some(boss => boss.is(parsedTweet.raidName))) {
-          // one of the applicable bosses, so then post
-          port.postMessage(createEvent('found-raid', parsedTweet))
-        }
-      }
-    }
+    tweet.split('\r\n')
+      .map(parseTweet)
+      .filter(v => !v.isEmpty())
+      .map(optionalTweet => optionalTweet.apply(extractBattleInfoFromTweet))
+      .filter(battleInfo => battleInfo && applicableBosses.some(boss => boss.is(battleInfo.raidName)))
+      .forEach(battleInfo => {
+        console.log('posting found-raid', battleInfo);
+        port.postMessage(createEvent('found-raid', battleInfo))
+      });
     return readIndefinite()
   }
 

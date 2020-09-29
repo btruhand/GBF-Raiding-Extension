@@ -1,12 +1,16 @@
 export class Optional<T> {
-  val: T
+  val?: T 
 
-  private constructor(val: T) {
+  private constructor(val?: T) {
     this.val = val;
   }
 
   public static of<T>(val: T) {
     return new Optional(val)
+  }
+
+  public static empty<T>() {
+    return new Optional<T>();
   }
 
   /**
@@ -23,5 +27,9 @@ export class Optional<T> {
       return f(this.val)
     }
     return;
+  }
+
+  isEmpty(): boolean {
+    return !this.val;
   }
 }

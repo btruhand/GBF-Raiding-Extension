@@ -2,7 +2,7 @@ import React, { useRef, MutableRefObject, useState } from 'react';
 import { PortRef } from '@/types/custom'
 import { getCredentials } from '@/lib/storage';
 import { createEvent, ExtensionEvent } from '@/lib/events';
-import { TweetedRaid } from '@/types/custom'
+import { BattleInfo } from '@/types/custom'
 import styles from '@/styles/app.module.scss'
 import { Modal } from "@/components/modal"
 import RaidsList from '@/components/raids';
@@ -14,23 +14,44 @@ const copyRaidId = (raidId: string) => {
     .catch(() => console.error('unsuccessful at copying to clipboard', raidId))
 }
 
-function ListedRaid(props: { key: string, battleId: string, raidName: string }) {
+function ListedRaid(props: {
+  key: string,
+  battleId: string,
+  raidName: string,
+  raidTime: string,
+  battleText?: string
+}) {
   const [clicked, setClicked] = useState(false)
 
   const clickedStyle = clicked ? styles['raid-clicked'] : ''
+  let battleTextEl;
+  if (props.battleText) {
+    battleTextEl = <p className={styles['highlight']}>{props.battleText}</p>;
+  }
   return (
     <div key={props.key} className={`${styles['display-found-raid']} ${clickedStyle}`} onClick={() => {
       copyRaidId(props.battleId).then(() => setClicked(true))
     }}>
-      <p>{props.raidName}</p>
-      <p>{props.battleId}</p>
+      <div>
+        <p>{props.raidName}</p>
+        <p>{props.battleId}</p>
+        {battleTextEl}
+      </div>
+      <div className={styles['right-side']}>
+        <p>{props.raidTime}</p>
+      </div>
     </div>
   )
 }
 
-function FoundRaids(props: { found: TweetedRaid[] }) {
+function FoundRaids(props: { found: BattleInfo[] }) {
   const raidList = props.found.map(r =>
-    <ListedRaid key={r.id} battleId={r.battleId} raidName={r.raidName} />
+    <ListedRaid key={r.battleId}
+      battleId={r.battleId}
+      raidName={r.raidName}
+      raidTime={r.raidTime}
+      battleText={r.battleMessage}
+    />
   )
   return (
     <div className="FoundRaids">
@@ -41,7 +62,8 @@ function FoundRaids(props: { found: TweetedRaid[] }) {
 
 function App() {
   const portRef: MutableRefObject<PortRef> = useRef({ port: null })
-  const [foundRaids, setFoundRaids] = useState<TweetedRaid[]>([])
+  const [foundRaids, setFoundRaids] = useState<BattleInfo[]>([])
+  const listenerAddedRef = useRef<boolean>(false)
 
   const startBackground = () => {
     if (!portRef.current.port) {
@@ -70,14 +92,19 @@ function App() {
       } else {
         console.log('posting twitter request')
         portRef.current.port.postMessage(createEvent('twitter', credentials))
-        portRef.current.port.onMessage.addListener((e: ExtensionEvent<TweetedRaid>) => {
-          console.log('event received', e)
-          console.log('current found raids', foundRaids)
-          setFoundRaids(prevFoundRaids => {
-            const limit = 50; // TODO make this configurable
-            return [e.payload!, ...prevFoundRaids.slice(0, limit - 2)]
+        if (!listenerAddedRef.current) {
+          portRef.current.port.onMessage.addListener((e: ExtensionEvent<BattleInfo>) => {
+            setFoundRaids(prevFoundRaids => {
+              const limit = 25; // TODO make this configurable
+              console.log('payload', e.payload!.battleId, 'prevFoundRaids', prevFoundRaids);
+              if (!prevFoundRaids.some(r => r.battleId === e.payload!.battleId)) {
+                return [e.payload!, ...prevFoundRaids.slice(0, limit - 1)]
+              }
+              return prevFoundRaids;
+            })
           })
-        })
+          listenerAddedRef.current = true;
+        }
       }
     } else console.log("no port currently")
   }
@@ -94,7 +121,6 @@ function App() {
       <button onClick={startTwitter}>Start Twitter</button>
       <button onClick={stopTwitter}>Stop Twitter</button>
       <Modal modalButtonText='Choose raids' modalTitle='Raids' closeAction={(cb) => {
-        console.log('closing');
         cb()
         if (portRef.current.port) {
           portRef.current.port.postMessage(createEvent('change-raid-list'))

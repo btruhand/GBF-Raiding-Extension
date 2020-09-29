@@ -1,4 +1,4 @@
-import { TweetedRaid } from '@/types/custom';
+import { BattleInfo, TweetedRaid } from '@/types/custom';
 
 class RaidBoss {
 
@@ -46,47 +46,42 @@ class RaidBoss {
 }
 
 /**
- * Parses tweet data to get the battle ID for a raid
- * @param tweetData String tweet data
- * @example
- * <code>
- * {"data":{"id":"1293447197564915712","created_at":"2020-08-12T07:20:17.000Z","text":"F1BD53C6 :参戦ID\n参加者募集！\nLv120 グリームニル\nhttps://t.co/QtFG7Je1Zh","author_id":"1109632615202455552","attachments":{"media_keys":["3_972306581810421760"]},"entities":{"urls":[{"start":35,"end":58,"url":"https://t.co/QtFG7Je1Zh"}]},"format":"default"},"matching_rules":[{"id":"1293427133616807936"}]}
- * </code>
- * @param returns an array of battle ID and the raid name or null if tweet data cannot be
- * parsed as expected
+ * Extracts {@link BattleInfo} from the given tweet
+ * @param tweet
  */
-function parseTweet(tweetData: string): TweetedRaid | null {
-  if (tweetData.length < 10) {
-    // unlikely to be an actual tweet data point
-    console.debug('empty tweet data', tweetData);
-    return null;
-  }
-  // console.log('tweet', tweetData)
-  var tweetJson;
-  try {
-    tweetJson = JSON.parse(tweetData)
-  } catch (e) {
-    console.error(`an error occurred when parsing tweet: ${tweetData}`, e);
-    return null;
-  }
+export function extractRaidDetailsFromTweet(tweet: TweetedRaid): BattleInfo | null {
+  let battleIdRegex = /[A-F0-9]{8}/
+  const match = tweet.text.match(battleIdRegex)
+  if (match) {
+    const battleId = match[0]
+    const splittedTweet = tweet.text.split('\n')
+    const raidName = splittedTweet[splittedTweet.length - 2] // expected to be raid name, hack
 
-  if (tweetJson && tweetJson.data) {
-    const tweetText: string = tweetJson.data.text
-    if (!tweetText) return null;
-    let battleIdRegex = /[A-F0-9]{8}/
-    const match = tweetText.match(battleIdRegex)
-    if (match) {
-      const battleId = match[0]
-      const splittedTweet = tweetText.split('\n')
-      const raidName = splittedTweet[splittedTweet.length - 2] // expected to be raid name, hack
-      return {
-        id: tweetJson.data.id,
-        battleId,
-        raidName
-      }
+    const options: any = {
+      hour: 'numeric',
+      minute: 'numeric',
+      second: 'numeric',
+    }
+    options.timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    const formatter = new Intl.DateTimeFormat('en-US', options)
+    const raidTime = formatter.format(tweet.tweetDate);
+
+    // get the words until the battleId
+    const firstByWords = splittedTweet[0].split(' ');
+    console.log('firstByWords', firstByWords);
+    const battleIdIdx = firstByWords.indexOf(battleId);
+    let battleMessage;
+    if (battleIdIdx !== 0) {
+      battleMessage = firstByWords.slice(0, firstByWords.indexOf(battleId)).join(' ');
+    }
+    return {
+      battleId,
+      raidName,
+      raidTime,
+      battleMessage
     }
   }
-  return null
+  return null;
 }
 
 function enRaidAnnouncement() {
@@ -97,4 +92,4 @@ function jpnRaidAnnouncement() {
   return '参加者募集！'
 }
 
-export { RaidBoss, parseTweet, enRaidAnnouncement, jpnRaidAnnouncement } 
+export { RaidBoss, enRaidAnnouncement, jpnRaidAnnouncement } 
