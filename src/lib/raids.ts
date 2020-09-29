@@ -1,4 +1,5 @@
 import { BattleInfo, TweetedRaid } from '@/types/custom';
+import { Optional } from './utils';
 
 class RaidBoss {
 
@@ -49,11 +50,11 @@ class RaidBoss {
  * Extracts {@link BattleInfo} from the given tweet
  * @param tweet
  */
-export function extractRaidDetailsFromTweet(tweet: TweetedRaid): BattleInfo | null {
+export function extractRaidDetailsFromTweet(tweet: TweetedRaid): Optional<BattleInfo> {
   let battleIdRegex = /[A-F0-9]{8}/
   const match = tweet.text.match(battleIdRegex)
   if (match) {
-    const battleId = match[0]
+    const battleId = match![0]
     const splittedTweet = tweet.text.split('\n')
     const raidName = splittedTweet[splittedTweet.length - 2] // expected to be raid name, hack
 
@@ -68,20 +69,19 @@ export function extractRaidDetailsFromTweet(tweet: TweetedRaid): BattleInfo | nu
 
     // get the words until the battleId
     const firstByWords = splittedTweet[0].split(' ');
-    console.log('firstByWords', firstByWords);
     const battleIdIdx = firstByWords.indexOf(battleId);
     let battleMessage;
     if (battleIdIdx !== 0) {
       battleMessage = firstByWords.slice(0, firstByWords.indexOf(battleId)).join(' ');
     }
-    return {
+    return Optional.of({
       battleId,
       raidName,
       raidTime,
       battleMessage
-    }
+    })
   }
-  return null;
+  return Optional.empty()
 }
 
 function enRaidAnnouncement() {
@@ -92,4 +92,5 @@ function jpnRaidAnnouncement() {
   return '参加者募集！'
 }
 
-export { RaidBoss, enRaidAnnouncement, jpnRaidAnnouncement } 
+export { RaidBoss, enRaidAnnouncement, jpnRaidAnnouncement };
+

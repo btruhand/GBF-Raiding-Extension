@@ -1,7 +1,7 @@
 export class Optional<T> {
-  val?: T 
+  val: T | null 
 
-  private constructor(val?: T) {
+  private constructor(val: T | null) {
     this.val = val;
   }
 
@@ -10,7 +10,7 @@ export class Optional<T> {
   }
 
   public static empty<T>() {
-    return new Optional<T>();
+    return new Optional<T>(null);
   }
 
   /**
@@ -22,11 +22,27 @@ export class Optional<T> {
     else return anotherValue
   }
 
-  apply<R>(f: (val: T) => R | undefined): R | undefined {
+  apply<R>(f: (val: T) => R | undefined): Optional<R> {
     if (this.val) {
-      return f(this.val)
+      const result = f(this.val);
+      if (result) {
+        return Optional.of(result);
+      }
     }
-    return;
+    return Optional.empty();
+  }
+
+  applyOpt<R>(f: (optVal: T) => Optional<R>): Optional<R> {
+    if (!this.isEmpty()) {
+      return f(this.val!);
+    }
+    return Optional.empty();
+
+  }
+
+  get(): T {
+    if (this.isEmpty()) throw new Error("not allowed to get from empty");
+    return this.val!;
   }
 
   isEmpty(): boolean {

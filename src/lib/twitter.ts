@@ -41,7 +41,6 @@ export function parseTweet(tweetData: string): Optional<TweetedRaid> {
     console.debug('empty tweet data', tweetData);
     return Optional.empty();
   }
-  // console.log('tweet', tweetData)
   var tweetJson;
   try {
     tweetJson = JSON.parse(tweetData)
@@ -50,7 +49,6 @@ export function parseTweet(tweetData: string): Optional<TweetedRaid> {
     return Optional.empty()
   }
 
-  console.log('tweet', tweetJson)
   if (tweetJson && tweetJson.data) {
     return Optional.of({
       id: tweetJson.data.id,

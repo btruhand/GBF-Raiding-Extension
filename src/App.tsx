@@ -1,12 +1,11 @@
-import React, { useRef, MutableRefObject, useState } from 'react';
-import { PortRef } from '@/types/custom'
-import { getCredentials } from '@/lib/storage';
-import { createEvent, ExtensionEvent } from '@/lib/events';
-import { BattleInfo } from '@/types/custom'
-import styles from '@/styles/app.module.scss'
-import { Modal } from "@/components/modal"
+import { Modal } from "@/components/modal";
 import RaidsList from '@/components/raids';
-import raids from '@/data/raids'
+import raids from '@/data/raids';
+import { createEvent, ExtensionEvent } from '@/lib/events';
+import { getCredentials } from '@/lib/storage';
+import styles from '@/styles/app.module.scss';
+import { BattleInfo, PortRef } from '@/types/custom';
+import React, { MutableRefObject, useRef, useState } from 'react';
 
 const copyRaidId = (raidId: string) => {
   return navigator.clipboard.writeText(raidId)
@@ -96,7 +95,6 @@ function App() {
           portRef.current.port.onMessage.addListener((e: ExtensionEvent<BattleInfo>) => {
             setFoundRaids(prevFoundRaids => {
               const limit = 25; // TODO make this configurable
-              console.log('payload', e.payload!.battleId, 'prevFoundRaids', prevFoundRaids);
               if (!prevFoundRaids.some(r => r.battleId === e.payload!.battleId)) {
                 return [e.payload!, ...prevFoundRaids.slice(0, limit - 1)]
               }
