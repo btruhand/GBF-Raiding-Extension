@@ -71,18 +71,22 @@ function App() {
         console.error('unable to connect to receiving end')
       } else {
         console.log('successfully connected to port', port)
-        portRef.current.port = port
+        port.onMessage.addListener((e: ExtensionEvent<BattleInfo>) => {
+          setFoundRaids(prevFoundRaids => {
+            const limit = 25; // TODO make this configurable
+            if (!prevFoundRaids.some(r => r.battleId === e.payload!.battleId)) {
+              return [e.payload!, ...prevFoundRaids.slice(0, limit - 1)]
+            }
+            return prevFoundRaids;
+          })
+        })
+        portRef.current.port = port;
+        listenerAddedRef.current = true;
       }
     } else console.log("port has already been created", portRef.current.port)
   }
-  const stopBackground = () => {
-    if (portRef.current.port) {
-      console.log(`disconnecting port ${portRef.current.port.name}`)
-      portRef.current.port.disconnect()
-      portRef.current = { port: null }
-    } else console.log("no port currently")
-  }
-  const startTwitter = async () => {
+  const start = async () => {
+    startBackground();
     if (portRef.current.port) {
       const credentials = await getCredentials()
       console.log(`current credentials: ${credentials}`)
@@ -91,22 +95,10 @@ function App() {
       } else {
         console.log('posting twitter request')
         portRef.current.port.postMessage(createEvent('twitter', credentials))
-        if (!listenerAddedRef.current) {
-          portRef.current.port.onMessage.addListener((e: ExtensionEvent<BattleInfo>) => {
-            setFoundRaids(prevFoundRaids => {
-              const limit = 25; // TODO make this configurable
-              if (!prevFoundRaids.some(r => r.battleId === e.payload!.battleId)) {
-                return [e.payload!, ...prevFoundRaids.slice(0, limit - 1)]
-              }
-              return prevFoundRaids;
-            })
-          })
-          listenerAddedRef.current = true;
-        }
       }
     } else console.log("no port currently")
   }
-  const stopTwitter = async () => {
+  const stop = async () => {
     if (portRef.current.port) {
       portRef.current.port.postMessage(createEvent('twitter-stop'))
     } else console.log("no port currently")
@@ -114,10 +106,8 @@ function App() {
 
   return (
     <div className="App">
-      <button onClick={startBackground}>Start background</button>
-      <button onClick={stopBackground}>Stop background</button>
-      <button onClick={startTwitter}>Start Twitter</button>
-      <button onClick={stopTwitter}>Stop Twitter</button>
+      <button onClick={start}>Start</button>
+      <button onClick={stop}>Stop</button>
       <Modal modalButtonText='Choose raids' modalTitle='Raids' closeAction={(cb) => {
         cb()
         if (portRef.current.port) {
