@@ -1,5 +1,5 @@
-import Twitter from 'twitter-lite'
 import { TweetedRaid } from '@/types/custom';
+import Twitter from 'twitter-lite';
 import { Optional } from './utils';
 
 /**
@@ -36,11 +36,8 @@ export function startStream(bearerToken: string) {
  * @param returns an array of tweet ID and the tweet 
  */
 export function parseTweet(tweetData: string): Optional<TweetedRaid> {
-  if (tweetData.length < 10) {
-    // unlikely to be an actual tweet data point
-    console.debug('empty tweet data', tweetData);
-    return Optional.empty();
-  }
+  if (tweetData.length < 10) return Optional.empty();
+
   var tweetJson;
   try {
     tweetJson = JSON.parse(tweetData)

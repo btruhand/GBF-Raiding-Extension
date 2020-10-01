@@ -57,6 +57,12 @@ function twitterStreamHandler(response: Response, port: chrome.runtime.Port) {
   }
 }
 
+function stopStreaming() {
+  if (streamReader) {
+    streamReader.cancel();
+  }
+}
+
 async function twitterRequestHandling(credentials: [string, string]) {
   console.log(`Credentials ${credentials}`)
   const client = new Twitter({
@@ -78,6 +84,7 @@ chrome.runtime.onConnect.addListener(port => {
 
   port.onDisconnect.addListener(port => {
     console.log(`port ${port.name} is disconnecting`)
+    stopStreaming();
   })
 
   port.onMessage.addListener((e: ExtensionEvent<string>) => {
@@ -102,9 +109,7 @@ chrome.runtime.onConnect.addListener(port => {
   port.onMessage.addListener((e: ExtensionEvent<any>) => {
     if (e.type === 'twitter-stop' && streamReader) {
       console.log('got stop twitter event')
-      if (streamReader) {
-        streamReader.cancel()
-      }
+      stopStreaming()
     }
   })
 
