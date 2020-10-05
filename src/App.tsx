@@ -53,7 +53,7 @@ function FoundRaids(props: { found: BattleInfo[] }) {
     />
   )
   return (
-    <div className="FoundRaids">
+    <div className={styles['raid-container']}>
       {raidList}
     </div>
   )
@@ -62,13 +62,15 @@ function FoundRaids(props: { found: BattleInfo[] }) {
 function App() {
   const portRef: MutableRefObject<PortRef> = useRef({ port: null })
   const [foundRaids, setFoundRaids] = useState<BattleInfo[]>([])
+  const [startRaids, setStartRaids] = useState<boolean>(false);
   const listenerAddedRef = useRef<boolean>(false)
 
-  const startBackground = () => {
+  const startBackground = async () => {
     if (!portRef.current.port) {
       const port = chrome.runtime.connect({ name: "gbf_raiding_extension" })
       if (!port) {
         console.error('unable to connect to receiving end')
+        return false;
       } else {
         console.log('successfully connected to port', port)
         port.onMessage.addListener((e: ExtensionEvent<BattleInfo>) => {
@@ -84,30 +86,41 @@ function App() {
         listenerAddedRef.current = true;
       }
     } else console.log("port has already been created", portRef.current.port)
-  }
-  const start = async () => {
-    startBackground();
+
     if (portRef.current.port) {
       const credentials = await getCredentials()
       console.log(`current credentials: ${credentials}`)
       if (!credentials[0] || !credentials[1]) {
         alert('no twitter credentials are stored yet, please go to settings page')
+        return false;
       } else {
         console.log('posting twitter request')
         portRef.current.port.postMessage(createEvent('twitter', credentials))
       }
     } else console.log("no port currently")
+
+    return true;
   }
-  const stop = async () => {
+  const stopBackground = async () => {
     if (portRef.current.port) {
       portRef.current.port.postMessage(createEvent('twitter-stop'))
     } else console.log("no port currently")
   }
+  const startRaid = async () => {
+    if (!startRaids && startBackground()) {
+      setStartRaids(true);
+    } else if (startRaids) {
+      stopBackground();
+      setStartRaids(false);
+    }
+  }
 
+  const raidsRunningStyle = `${styles.start} ${startRaids ? styles.running : ''}`;
   return (
     <div className="App">
-      <button onClick={start}>Start</button>
-      <button onClick={stop}>Stop</button>
+      <div className={styles['start-stop-container']}>
+        <button className={raidsRunningStyle} onClick={startRaid}></button>
+      </div>
       <Modal modalButtonText='Choose raids' modalTitle='Raids' closeAction={(cb) => {
         cb()
         if (portRef.current.port) {
