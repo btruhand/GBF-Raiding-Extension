@@ -1,7 +1,7 @@
-import React, { useState, useEffect, useRef, RefObject, MutableRefObject } from 'react'
 import { RaidBoss } from '@/lib/raids'
+import { clearChosenRaid, isBossStored, storeChosenRaid } from '@/lib/storage'
 import styles from '@/styles/raids.module.scss'
-import { storeChosenRaid, clearChosenRaid, isBossStored } from '@/lib/storage'
+import React, { MutableRefObject, RefObject, useEffect, useRef, useState } from 'react'
 import { TwitterLabs } from 'twitter-lite'
 
 function RaidDisplay(props: { boss: RaidBoss, twitterRef: RefObject<TwitterLabs | null> }) {
@@ -26,10 +26,10 @@ function RaidDisplay(props: { boss: RaidBoss, twitterRef: RefObject<TwitterLabs 
     )
 }
 
-function RaidsList(props: { difficulty: string, data: RaidBoss[] }) {
+function RaidsList(props: { difficulty: string, data: RaidBoss[], className?: string }) {
     const twitterRef: MutableRefObject<TwitterLabs | null> = useRef<TwitterLabs>(null)
     return (
-        <div>
+        <div className={props.className}>
             <p>{props.difficulty}</p>
             <div className={styles['list-raids']}>
                 {props.data.map(boss => <RaidDisplay boss={boss} twitterRef={twitterRef} />)}

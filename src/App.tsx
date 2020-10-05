@@ -118,17 +118,17 @@ function App() {
   const raidsRunningStyle = `${styles.start} ${startRaids ? styles.running : ''}`;
   return (
     <div className="App">
-      <div className={styles['start-stop-container']}>
+      <div className={styles['app-buttons-container']}>
         <button className={raidsRunningStyle} onClick={startRaid}></button>
+        <Modal modalButtonText='&#9881;' modalTitle='Raids' buttonClassName={styles['modal-button']} closeAction={(cb) => {
+          cb()
+          if (portRef.current.port) {
+            portRef.current.port.postMessage(createEvent('change-raid-list'))
+          }
+        }}>
+          <RaidsList difficulty='high-level' data={raids['high-level']} />
+        </Modal>
       </div>
-      <Modal modalButtonText='Choose raids' modalTitle='Raids' closeAction={(cb) => {
-        cb()
-        if (portRef.current.port) {
-          portRef.current.port.postMessage(createEvent('change-raid-list'))
-        }
-      }}>
-        <RaidsList difficulty='high-level' data={raids['high-level']} />
-      </Modal>
 
       <FoundRaids found={foundRaids} />
     </div>
